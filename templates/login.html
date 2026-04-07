@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="login_page_title">SignLingua - Login</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=2.0">
+    <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
+    <style>
+        body {
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .auth-card {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            margin: auto;
+            padding: 40px;
+        }
+
+        .auth-card h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .auth-card p {
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .auth-footer {
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .auth-footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-footer a:hover {
+            text-decoration: underline;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        .error {
+            color: #ffb3b3;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="glass-card auth-card float-card">
+        <h1 data-i18n="site_name">SignLingua</h1>
+        <p data-i18n="login_p">Login to your account</p>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" data-i18n-placeholder="username_ph" required>
+            <input type="password" name="password" placeholder="Password" data-i18n-placeholder="password_ph" required>
+            <button type="submit" data-i18n="btn_login">Login</button>
+            {% if error %}
+            <div class="error">{{ error }}</div>
+            {% endif %}
+        </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        <div class="auth-footer">
+            <span data-i18n="no_account">Don't have an account?</span> <a href="{{ url_for('signup') }}" data-i18n="sign_up_link">Sign up</a>
+        </div>
+        <a href="{{ url_for('index') }}" class="back-link"><i class="fas fa-arrow-left"></i> <span data-i18n="back_home">Back to Home</span></a>
+    </div>
+
+    <!-- Inspirational Quote Banner -->
+    <div id="quote-container" class="quote-banner">
+        <span class="quote-icon"><i class="fas fa-quote-left"></i></span>
+        <span id="quote-text" data-i18n="loading_inspiration">Loading inspiration...</span>
+        <span class="quote-icon"><i class="fas fa-quote-right"></i></span>
+    </div>
+
+    <script>
+        // Inspirational Quotes Feature
+        const quotes = [
+            "\"Sign language is the most beautiful expression of the soul.\" – Unknown",
+            "\"Deaf people can do anything except hear.\" – I. King Jordan",
+            "\"Sign language is not about gestures, it's about communication.\" – Nyle DiMarco",
+            "\"The only thing that separates us is the inability to communicate.\" – Unknown",
+            "\"Language is the road map of a culture. It tells you where its people come from and where they are going.\" – Rita Mae Brown",
+            "\"In a world of silence, hands speak louder than words.\" – Unknown",
+            "\"Communication leads to community, understanding, and inclusivity.\" – Unknown",
+            "\"Every sign is a bridge between hearts.\" – Unknown",
+            "\"The beauty of sign language is that it is visual, expressive, and universal.\" – Unknown",
+            "\"When we learn to sign, we learn to listen with our eyes.\" – Unknown",
+            "\"Sign language is not a barrier, it's a bond.\" – Unknown",
+            "\"Deafness is not a disability, it's a different ability to communicate.\" – Unknown",
+            "\"Your voice can be heard even when you are silent, if you know how to sign.\" – Unknown",
+            "\"Inclusion begins with understanding – and sign language is the key.\" – Unknown",
+            "\"Every sign tells a story.\" – Unknown"
+        ];
+
+        function displayRandomQuote() {
+            const quoteTextElement = document.getElementById('quote-text');
+            const quoteContainer = document.getElementById('quote-container');
+
+            if (!quoteTextElement || !quoteContainer) return;
+
+            const initialIndex = Math.floor(Math.random() * quotes.length);
+            quoteTextElement.textContent = quotes[initialIndex];
+            setTimeout(() => {
+                quoteContainer.classList.add('visible');
+            }, 50);
+
+            function updateQuote() {
+                quoteContainer.classList.remove('visible');
+                setTimeout(() => {
+                    const randomIndex = Math.floor(Math.random() * quotes.length);
+                    quoteTextElement.textContent = quotes[randomIndex];
+                    quoteContainer.classList.add('visible');
+                }, 1000);
+            }
+
+            setInterval(updateQuote, 8000);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', displayRandomQuote);
+        } else {
+            displayRandomQuote();
+        }
+    </script>
+</body>
+
+</html>

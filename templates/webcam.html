@@ -1,0 +1,606 @@
+{% extends "index.html" %}
+{% block title %}Webcam Input{% endblock %}
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<style>
+    /* Meeting layout */
+    .meeting-container {
+        background: #1a1e2b;
+        border-radius: 20px;
+        padding: 20px;
+        color: white;
+    }
+
+    .meeting-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 0 10px;
+    }
+
+    .meeting-code {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 8px 16px;
+        border-radius: 40px;
+        font-size: 0.9rem;
+    }
+
+    .meeting-timer {
+        font-size: 0.9rem;
+        color: #b3af8f;
+    }
+
+    .video-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .video-window {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(12px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 16/9;
+        position: relative;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+    }
+
+    .video-label {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    #webcam,
+    #output-canvas,
+    #avatar-video-meeting {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    #webcam {
+        display: none;
+    }
+
+    #output-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        display: none;
+    }
+
+    .avatar-placeholder-meeting {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        background: #2c3e50;
+        color: #9aa0a6;
+        text-align: center;
+    }
+
+    .avatar-placeholder-meeting svg {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 12px;
+        fill: #d0d9d4;
+    }
+
+    .control-bar {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .control-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: none;
+        border-radius: 50px;
+        padding: 12px 24px;
+        color: white;
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+        backdrop-filter: blur(5px);
+    }
+
+    .control-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .control-btn.primary {
+        background: #496a81;
+    }
+
+    .control-btn.primary:hover {
+        background: #2b3a67;
+    }
+
+    .control-btn.danger {
+        background: #b34a4a;
+    }
+
+    .control-btn.danger:hover {
+        background: #8f3a3a;
+    }
+
+    .control-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .input-panel {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 20px;
+        margin-top: 20px;
+        backdrop-filter: blur(5px);
+    }
+
+    .input-panel label {
+        color: white;
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+    }
+
+    .input-panel select,
+    .input-panel .file-button {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px;
+        border-radius: 28px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .input-panel .file-button {
+        background: #2b3a67;
+        border: none;
+        width: auto;
+        display: inline-block;
+    }
+
+    .info-text {
+        color: #b3af8f;
+    }
+
+    #continuous-status,
+    #webcam-status {
+        color: #b3af8f;
+        margin-top: 10px;
+    }
+</style>
+{% endblock %}
+{% block input_section %}
+<div class="meeting-container glass-card">
+    <div class="meeting-header">
+        <span class="meeting-code"><i class="fas fa-video"></i> <span data-i18n="webcam_meeting_title">SignLingua Meeting</span></span>
+        <span class="meeting-timer" id="meeting-timer">00:00</span>
+    </div>
+
+    <div class="video-grid">
+        <!-- Local webcam -->
+        <div class="video-window">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="output-canvas"></canvas>
+            <span class="video-label" data-i18n="webcam_you">You</span>
+        </div>
+        <!-- Remote avatar -->
+        <div class="video-window">
+            <video id="avatar-video-meeting" controls style="display:none;"></video>
+            <div id="avatar-placeholder-meeting" class="avatar-placeholder-meeting">
+                <svg viewBox="0 0 24 24">
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                </svg>
+                <span data-i18n="webcam_avatar">Avatar</span>
+            </div>
+            <span class="video-label" data-i18n="webcam_avatar">Avatar</span>
+        </div>
+    </div>
+
+    <div class="control-bar">
+        <button class="control-btn" onclick="startWebcam()" id="start-cam-btn">
+            <i class="fas fa-play"></i> <span data-i18n="webcam_start_cam">Start Camera</span>
+        </button>
+        <button class="control-btn" onclick="captureWebcam()" disabled id="capture-btn">
+            <i class="fas fa-camera-retro"></i> <span data-i18n="webcam_capture_btn">Capture Sign</span>
+        </button>
+        <button class="control-btn primary" onclick="toggleContinuousMode()" id="continuous-btn">
+            <i class="fas fa-sync-alt"></i> <span data-i18n="webcam_continuous">Continuous</span>
+        </button>
+    </div>
+
+    <div class="input-panel glass-card">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <label for="sign-select" data-i18n="webcam_manual_sel">Sign Language Input (manual)</label>
+                <select id="sign-select">
+                    <option value="hello you how">hello you how</option>
+                    <option value="Home welcome">Home welcome</option>
+                    <option value="family big">family big</option>
+                    <option value="mother food cook">mother food cook</option>
+                    <option value="aunty plants water">aunty plants water</option>
+                    <option value="uncle fruits get">uncle fruits get</option>
+                    <option value="grandmother market go will">grandmother market go will</option>
+                    <option value="baby cute">baby cute</option>
+                    <option value="hot very here">hot very here</option>
+                    <option value="she live life like queen">she live life like queen</option>
+                </select>
+            </div>
+            <div>
+                <label for="input-language" data-i18n="webcam_voice_lang">Voice Input Language</label>
+                <select id="input-language">
+                    <option value="en-US">English</option>
+                    <option value="hi-IN">हिन्दी (Hindi)</option>
+                    <option value="te-IN">తెలుగు (Telugu)</option>
+                </select>
+                <p class="info-text" style="margin-top: 5px;"><i class="fas fa-info-circle"></i> <span data-i18n="webcam_output_info">Set output language in navbar</span></p>
+            </div>
+        </div>
+    </div>
+
+    <p id="webcam-status" class="info-text"></p>
+    <p id="continuous-status" class="info-text"></p>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    (function () {
+        console.log("Webcam script initializing...");
+
+        if (typeof Hands === 'undefined') {
+            console.error("MediaPipe Hands library not loaded!");
+            showToast("MediaPipe library failed to load. Hand tracking disabled.", true);
+            return;
+        }
+
+        const videoElement = document.getElementById('webcam');
+        const canvasElement = document.getElementById('output-canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+
+        let webcamStream = null;
+        let hands = null;
+        let lastVideoTime = -1;
+        let continuousMode = false;
+        let continuousRecognition = null;
+        let listeningActive = false;
+
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10],
+            [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18],
+            [18, 19], [19, 20], [5, 9], [9, 13], [13, 17], [0, 17]
+        ];
+
+        function initHandTracking() {
+            hands = new Hands({
+                locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            });
+            hands.setOptions({
+                maxNumHands: 2,
+                modelComplexity: 1,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+            hands.onResults(onHandResults);
+        }
+
+        function onHandResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+            if (results.multiHandLandmarks) {
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(canvasCtx, landmarks, HAND_CONNECTIONS, { color: '#496a81', lineWidth: 2 });
+                    drawLandmarks(canvasCtx, landmarks, { color: '#b3af8f', lineWidth: 1 });
+                }
+            }
+            canvasCtx.restore();
+        }
+
+        function drawConnectors(ctx, landmarks, connections, style) {
+            ctx.beginPath();
+            ctx.strokeStyle = style.color;
+            ctx.lineWidth = style.lineWidth;
+            for (const [startIdx, endIdx] of connections) {
+                const start = landmarks[startIdx];
+                const end = landmarks[endIdx];
+                if (start && end) {
+                    ctx.moveTo(start.x * ctx.canvas.width, start.y * ctx.canvas.height);
+                    ctx.lineTo(end.x * ctx.canvas.width, end.y * ctx.canvas.height);
+                }
+            }
+            ctx.stroke();
+        }
+
+        function drawLandmarks(ctx, landmarks, style) {
+            ctx.fillStyle = style.color;
+            for (const point of landmarks) {
+                ctx.beginPath();
+                ctx.arc(point.x * ctx.canvas.width, point.y * ctx.canvas.height, style.lineWidth * 2, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        window.startWebcam = function () {
+            console.log("startWebcam called");
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Webcam not supported.', true);
+                return;
+            }
+            if (webcamStream) {
+                webcamStream.getTracks().forEach(track => track.stop());
+                webcamStream = null;
+            }
+            navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false })
+                .then(stream => {
+                    webcamStream = stream;
+                    videoElement.srcObject = stream;
+                    videoElement.onloadedmetadata = () => {
+                        canvasElement.width = videoElement.videoWidth;
+                        canvasElement.height = videoElement.videoHeight;
+                        videoElement.play()
+                            .then(() => {
+                                videoElement.style.display = 'block';
+                                canvasElement.style.display = 'block';
+                                document.getElementById('capture-btn').disabled = false;
+                                document.getElementById('webcam-status').innerText = 'Webcam active. Hand tracking enabled.';
+                                if (!hands) initHandTracking();
+                                const processFrames = async () => {
+                                    if (videoElement.currentTime !== lastVideoTime) {
+                                        lastVideoTime = videoElement.currentTime;
+                                        await hands.send({ image: videoElement });
+                                    }
+                                    requestAnimationFrame(processFrames);
+                                };
+                                processFrames();
+                            })
+                            .catch(e => {
+                                console.error('Error playing video:', e);
+                                showToast('Error starting video playback.', true);
+                            });
+                    };
+                })
+                .catch(err => {
+                    console.error('Error accessing webcam:', err);
+                    if (err.name === 'NotAllowedError') showToast('Camera access denied.', true);
+                    else if (err.name === 'NotFoundError') showToast('No camera found.', true);
+                    else showToast('Could not access webcam.', true);
+                });
+        };
+
+        // Function to send text to conversation endpoint
+        function sendForConversation(text) {
+            console.log("sendForConversation called with text:", text, "continuousMode:", continuousMode);
+            if (!continuousMode) return;
+            const language = document.getElementById('output-language').value;
+            console.log("Sending to /converse:", { text, language });
+            document.getElementById('continuous-status').innerHTML = `You said: "${text}" – thinking...`;
+            fetch('/converse', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text, language: language })
+            })
+                .then(response => {
+                    console.log("/converse response status:", response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log("/converse data:", data);
+                    if (!continuousMode) return;
+                    // Update meeting avatar
+                    const meetingAvatar = document.getElementById('avatar-video-meeting');
+                    const meetingPlaceholder = document.getElementById('avatar-placeholder-meeting');
+                    if (data.avatar) {
+                        meetingAvatar.src = data.avatar;
+                        meetingAvatar.style.display = 'block';
+                        meetingPlaceholder.style.display = 'none';
+                        meetingAvatar.play();
+                    } else {
+                        meetingAvatar.style.display = 'none';
+                        meetingPlaceholder.style.display = 'flex';
+                    }
+                    // 🆕 Update main text and speech outputs
+                    showOutput(data);
+                    document.getElementById('continuous-status').innerHTML = `Reply: "${data.text}"`;
+                })
+                .catch(err => {
+                    console.error('Error in sendForConversation:', err);
+                    document.getElementById('continuous-status').innerText = 'Error getting reply.';
+                });
+        }
+
+        // Start continuous listening using Web Speech API with selected language
+        function startContinuousListening() {
+            if (listeningActive) return;
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast('Your browser does not support speech recognition.', true);
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            continuousRecognition = new SpeechRecognition();
+            continuousRecognition.continuous = true;
+            continuousRecognition.interimResults = false;
+            continuousRecognition.maxAlternatives = 1;
+
+            const inputLang = document.getElementById('input-language').value;
+            continuousRecognition.lang = inputLang;
+            console.log("Speech recognition language set to:", inputLang);
+
+            continuousRecognition.onstart = () => {
+                listeningActive = true;
+                document.getElementById('continuous-status').innerHTML = `Listening (${inputLang})...`;
+                console.log("Continuous listening started with language:", inputLang);
+            };
+
+            continuousRecognition.onresult = (event) => {
+                const last = event.results.length - 1;
+                const transcript = event.results[last][0].transcript;
+                console.log("Recognized:", transcript);
+                if (continuousMode) {
+                    sendForConversation(transcript);
+                }
+            };
+
+            continuousRecognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                if (event.error === 'no-speech') {
+                    // ignore
+                } else if (event.error === 'language-not-supported' || event.error === 'aborted') {
+                    const currentLang = continuousRecognition.lang;
+                    if (currentLang.includes('-')) {
+                        const baseLang = currentLang.split('-')[0];
+                        showToast(`Trying ${baseLang}...`, true);
+                        continuousRecognition.lang = baseLang;
+                        continuousRecognition.start();
+                    } else {
+                        showToast('Falling back to English.', true);
+                        continuousRecognition.lang = 'en-US';
+                        continuousRecognition.start();
+                    }
+                } else {
+                    showToast('Speech recognition error: ' + event.error, true);
+                    stopContinuousListening();
+                    setTimeout(() => {
+                        if (continuousMode) startContinuousListening();
+                    }, 1000);
+                }
+            };
+
+            continuousRecognition.onend = () => {
+                console.log("Continuous listening ended");
+                listeningActive = false;
+                if (continuousMode) {
+                    console.log("Restarting continuous listening...");
+                    setTimeout(() => {
+                        if (continuousMode) {
+                            startContinuousListening();
+                        }
+                    }, 100);
+                }
+            };
+
+            continuousRecognition.start();
+        }
+
+        function stopContinuousListening() {
+            if (continuousRecognition) {
+                continuousRecognition.stop();
+                continuousRecognition = null;
+            }
+            listeningActive = false;
+            document.getElementById('continuous-status').innerHTML = '';
+        }
+
+        // Capture sign (manual)
+        window.captureWebcam = function () {
+            console.log("captureWebcam called, continuousMode:", continuousMode);
+            if (!webcamStream) return;
+            const selectedSign = document.getElementById('sign-select').value;
+            const language = document.getElementById('output-language').value;
+            if (!selectedSign) {
+                showToast('Please select a sign.', true);
+                return;
+            }
+            document.getElementById('input-status').innerText = 'Input: Webcam';
+            document.getElementById('translating-status').innerText = 'Status: Translating...';
+            startProgress();
+
+            fetch('/predict_text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: selectedSign, language: language })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log("/predict_text response:", data);
+                    // Update meeting avatar
+                    const meetingAvatar = document.getElementById('avatar-video-meeting');
+                    const meetingPlaceholder = document.getElementById('avatar-placeholder-meeting');
+                    if (data.avatar) {
+                        meetingAvatar.src = data.avatar;
+                        meetingAvatar.style.display = 'block';
+                        meetingPlaceholder.style.display = 'none';
+                        meetingAvatar.play();
+                    } else {
+                        meetingAvatar.style.display = 'none';
+                        meetingPlaceholder.style.display = 'flex';
+                    }
+                    // 🆕 Update main text and speech outputs
+                    showOutput(data);
+                    document.getElementById('translating-status').innerText = 'Status: Complete';
+                    finishProgress();
+                    if (continuousMode) {
+                        console.log("Continuous mode active, calling sendForConversation");
+                        sendForConversation(selectedSign);
+                    }
+                })
+                .catch(err => {
+                    console.error('Error in /predict_text:', err);
+                    document.getElementById('translating-status').innerText = 'Status: Error';
+                    showToast('Translation error.', true);
+                    finishProgress();
+                });
+            // Stop webcam after capture (optional)
+            webcamStream.getTracks().forEach(track => track.stop());
+            videoElement.style.display = 'none';
+            canvasElement.style.display = 'none';
+            document.getElementById('capture-btn').disabled = true;
+            document.getElementById('webcam-status').innerText = 'Webcam stopped.';
+        };
+
+        // Toggle continuous mode
+        window.toggleContinuousMode = function () {
+            const btn = document.getElementById('continuous-btn');
+            console.log("toggleContinuousMode, current continuousMode:", continuousMode);
+            if (!continuousMode) {
+                if (!webcamStream) {
+                    showToast('Please start the webcam first.', true);
+                    return;
+                }
+                continuousMode = true;
+                btn.innerHTML = '<i class="fas fa-stop"></i> Stop Continuous';
+                // Start listening
+                startContinuousListening();
+            } else {
+                continuousMode = false;
+                btn.innerHTML = '<i class="fas fa-sync-alt"></i> Continuous';
+                stopContinuousListening();
+            }
+        };
+
+        // Simple timer (optional)
+        let seconds = 0;
+        setInterval(() => {
+            if (webcamStream) {
+                seconds++;
+                const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+                const secs = (seconds % 60).toString().padStart(2, '0');
+                document.getElementById('meeting-timer').innerText = `${mins}:${secs}`;
+            }
+        }, 1000);
+
+        console.log("Webcam script fully initialized.");
+    })();
+</script>
+{% endblock %}

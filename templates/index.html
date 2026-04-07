@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="page_title">SignLingua -Multilingual Sign Language Translation</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}?v=3.0">
+    <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+
+<body>
+    <div id="progress-bar"></div>
+
+    <!-- Mobile Overlay -->
+    <div class="overlay" id="drawer-overlay" onclick="toggleDrawer()"></div>
+
+    <nav class="navbar animate-fade-up delay-1">
+        <div class="logo">
+            <h1 data-i18n="site_name">SignLingua</h1>
+        </div>
+
+        <!-- Desktop Nav -->
+        <div class="nav-links desktop">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('index') }}" data-i18n="nav_home">Home</a>
+            <a href="{{ url_for('about') }}" data-i18n="nav_about">About Us</a>
+            <div class="dropdown">
+                <button class="dropbtn" onclick="toggleDropdown(event)" type="button">
+                    <i class="fas fa-chevron-down"></i> <span data-i18n="nav_input_mode">Input Mode</span>
+                </button>
+                <div class="dropdown-content" id="input-dropdown">
+                    <a href="{{ url_for('video_input') }}"><i class="fas fa-video"></i> <span data-i18n="nav_video">Sign
+                            Language Video</span></a>
+                    <a href="{{ url_for('text_input') }}"><i class="fas fa-keyboard"></i> <span
+                            data-i18n="nav_text">Text Input</span></a>
+                    <a href="{{ url_for('audio_input') }}"><i class="fas fa-file-audio"></i> <span
+                            data-i18n="nav_audio">Audio File Upload</span></a>
+                    <a href="{{ url_for('webcam_input') }}"><i class="fas fa-camera"></i> <span
+                            data-i18n="nav_webcam">Live Webcam</span></a>
+                </div>
+            </div>
+            <!-- UI Language Selector -->
+            <div class="ui-language-selector">
+                <label for="ui-language"><i class="fas fa-language"></i></label>
+                <select id="ui-language" onchange="changeUILanguage(this.value)">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+            </div>
+            <!-- Output Language Selector -->
+            <div class="output-language-selector">
+                <label for="output-language"><i class="fas fa-globe"></i></label>
+                <select id="output-language">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="bn">বাংলা</option>
+                    <option value="mr">मराठी</option>
+                </select>
+            </div>
+            <!-- Logout link -->
+            <a href="{{ url_for('logout') }}"><span data-i18n="logout">Logout</span> ({{ current_user.username }})</a>
+            {% else %}
+            <a href="{{ url_for('login') }}" data-i18n="nav_login">Login</a>
+            <a href="{{ url_for('signup') }}" data-i18n="nav_signup">Sign Up</a>
+            {% endif %}
+        </div>
+
+        <!-- Mobile Hamburger -->
+        <button class="hamburger" onclick="toggleDrawer()" aria-label="Toggle Menu">
+            <i class="fas fa-bars"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile Side Drawer -->
+    <div class="side-drawer" id="side-drawer">
+        <button class="close-drawer" onclick="toggleDrawer()" aria-label="Close Menu">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('index') }}" data-i18n="nav_home"><i class="fas fa-home"></i> Home</a>
+            <a href="{{ url_for('about') }}" data-i18n="nav_about"><i class="fas fa-info-circle"></i> About Us</a>
+            <div style="color: rgba(255,255,255,0.6); padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); width: 100%;"
+                data-i18n="nav_input_mode">Input Mode</div>
+            <a href="{{ url_for('video_input') }}" style="padding-left: 15px;"><i class="fas fa-video"></i> <span
+                    data-i18n="nav_video">Video</span></a>
+            <a href="{{ url_for('text_input') }}" style="padding-left: 15px;"><i class="fas fa-keyboard"></i> <span
+                    data-i18n="nav_text">Text</span></a>
+            <a href="{{ url_for('audio_input') }}" style="padding-left: 15px;"><i class="fas fa-file-audio"></i> <span
+                    data-i18n="nav_audio">Audio</span></a>
+            <a href="{{ url_for('webcam_input') }}" style="padding-left: 15px;"><i class="fas fa-camera"></i> <span
+                    data-i18n="nav_webcam">Webcam</span></a>
+
+            <div style="margin-top: 10px; width: 100%;">
+                <label style="color: rgba(255,255,255,0.6); font-size: 0.85rem; display:block; margin-bottom: 5px;">UI
+                    Language</label>
+                <select id="mobile-ui-language"
+                    onchange="changeUILanguage(this.value); document.getElementById('ui-language').value=this.value;"
+                    style="padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="te">తెలుగు</option>
+                </select>
+            </div>
+
+            <div style="margin-top: 10px; width: 100%;">
+                <label
+                    style="color: rgba(255,255,255,0.6); font-size: 0.85rem; display:block; margin-bottom: 5px;">Output
+                    Language</label>
+                <select id="mobile-output-language"
+                    onchange="document.getElementById('output-language').value=this.value;"
+                    style="padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                    <option value="en">English</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="ta">தமிழ்</option>
+                    <option value="te">తెలుగు</option>
+                    <option value="bn">বাংলা</option>
+                    <option value="mr">मराठी</option>
+                </select>
+            </div>
+
+            <a href="{{ url_for('logout') }}" style="margin-top: 20px; color: #e74c3c;"><i
+                    class="fas fa-sign-out-alt"></i> <span data-i18n="logout">Logout</span></a>
+            {% else %}
+            <a href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> <span data-i18n="nav_login">Login</span></a>
+            <a href="{{ url_for('signup') }}"><i class="fas fa-user-plus"></i> <span data-i18n="nav_signup">Sign Up</span></a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Inspirational Quote Banner -->
+    <div id="quote-container" class="quote-banner">
+        <span class="quote-icon"><i class="fas fa-quote-left"></i></span>
+        <span id="quote-text">Loading inspiration...</span>
+        <span class="quote-icon"><i class="fas fa-quote-right"></i></span>
+    </div>
+
+    {% if request.endpoint == 'index' %}
+    <div class="hero" id="hero">
+        <div class="hero-glass float-card" data-aos="zoom-in" data-aos-duration="1000">
+            <h2 data-i18n="hero_title">Multilingual<br>Sign Language Translation</h2>
+            <p><span id="typed-subtitle"></span></p>
+            <button class="cta-button glow-hover" data-aos="fade-up" data-aos-delay="300"
+                onclick="window.location.href='{{ url_for('video_input') }}'">
+                <span data-i18n="hero_cta">Get Started</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if request.endpoint != 'index' %}
+    <div id="main-content">
+        {% block input_section %}{% endblock %}
+
+        <!-- Output Cards – hidden on about page -->
+        {% if request.endpoint != 'about' %}
+        <div class="outputs-container" data-aos="fade-up" data-aos-duration="1000">
+            <div class="output-grid">
+                <div class="output-card glass-card glow-hover" data-aos="flip-left" data-aos-delay="100">
+                    <h3><i class="fas fa-file-alt"></i> <span data-i18n="output_text">Text Output</span></h3>
+                    <div class="output-content" id="text-output"></div>
+                </div>
+                <div class="output-card glass-card glow-hover" data-aos="flip-left" data-aos-delay="200">
+                    <h3><i class="fas fa-volume-up"></i> <span data-i18n="output_speech">Speech Output</span></h3>
+                    <div class="output-content" id="speech-output"></div>
+                </div>
+                <div class="output-card glass-card glow-hover" data-aos="flip-left" data-aos-delay="300">
+                    <h3><i class="fas fa-robot"></i> <span data-i18n="output_avatar">Avatar Output</span></h3>
+                    <div class="output-content" id="avatar-output">
+                        <video id="avatar-video" controls style="display:none;"></video>
+                        <div id="avatar-placeholder" class="avatar-placeholder">
+                            <svg viewBox="0 0 24 24">
+                                <path
+                                    d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+                            </svg>
+                            <span data-i18n="no_avatar">No avatar video</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar – hidden on about page -->
+        <div class="status-bar glass-card" data-aos="fade-right" data-aos-offset="0">
+            <div class="status-item"><span class="badge" data-i18n="badge_gesture">Gesture</span> <span
+                    id="recognized-gesture">THANK YOU</span></div>
+            <div class="status-item"><span class="badge" data-i18n="badge_confidence">Confidence</span> <span
+                    id="confidence" class="confidence">0.92</span></div>
+            <div class="status-item"><span class="badge" data-i18n="badge_speech_rec">Speech Rec</span> <span
+                    id="speech-rec-text">Hello everyone</span></div>
+            <div class="status-item"><span class="badge" data-i18n="badge_input">Input</span> <span
+                    id="input-status">None</span></div>
+            <div class="status-item"><span class="badge" data-i18n="badge_status">Status</span> <span
+                    id="translating-status">Ready</span></div>
+        </div>
+
+        <!-- Footer – hidden on about page -->
+        <footer class="footer animate-fade-up delay-4">
+            <p data-i18n="footer_copyright">© 2026 SignLingua – Indian Sign Language Translation System</p>
+            <p data-i18n="footer_developed">Developed for B.Tech Final Year Project
+            </p>
+            <div class="social-links">
+                <a href="https://github.com/your-repo" target="_blank"><i class="fab fa-github fa-2x"></i></a>
+                <a href="#" target="_blank"><i class="fas fa-file-pdf fa-2x"></i></a>
+            </div>
+        </footer>
+        {% endif %} <!-- end of hide on about -->
+    </div>
+    {% endif %}
+
+    <div id="toast"></div>
+
+    <script>
+        // Progress bar helpers
+        function setProgress(percent) {
+            document.getElementById('progress-bar').style.width = percent + '%';
+        }
+        function startProgress() {
+            setProgress(30);
+            setTimeout(() => setProgress(70), 200);
+            setTimeout(() => setProgress(90), 400);
+        }
+        function finishProgress() {
+            setProgress(100);
+            setTimeout(() => setProgress(0), 200);
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.style.background = isError ? '#c0392b' : '#2c3e50';
+            toast.innerHTML = message;
+            toast.style.visibility = 'visible';
+            setTimeout(() => { toast.style.visibility = 'hidden'; }, 3000);
+        }
+
+        function showOutput(result) {
+            const lang = window.currentUILang || 'en';
+            const prefix = uiTranslations[lang]?.output_text_prefix || 'Text Output: ';
+            let displayText = prefix + result.text;
+            if (result.original_text && result.original_text !== result.text) {
+                displayText += ' (Original: ' + result.original_text + ')';
+            }
+            document.getElementById('text-output').innerText = displayText;
+            document.getElementById('recognized-gesture').innerText = result.text;
+            document.getElementById('confidence').innerText = '0.92';
+            document.getElementById('speech-rec-text').innerText = result.text;
+
+            if (result.audio) {
+                document.getElementById('speech-output').innerHTML = `<audio controls autoplay src="${result.audio}"></audio>`;
+            } else {
+                document.getElementById('speech-output').innerText = uiTranslations[lang]?.no_audio || 'No audio';
+            }
+
+            const avatarVideo = document.getElementById('avatar-video');
+            const avatarPlaceholder = document.getElementById('avatar-placeholder');
+            if (result.avatar) {
+                avatarVideo.src = result.avatar;
+                avatarVideo.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
+                avatarVideo.play();
+            } else {
+                avatarVideo.style.display = 'none';
+                avatarPlaceholder.style.display = 'flex';
+            }
+        }
+
+        // Prediction functions (unchanged)
+        function predictVideo(event) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spinner"></i> Translating...';
+            btn.disabled = true;
+            startProgress();
+
+            const fileInput = document.getElementById('video-file');
+            if (!fileInput.files[0]) {
+                showToast('Please select a video file.', true);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                finishProgress();
+                return;
+            }
+            const language = document.getElementById('output-language').value;
+            const formData = new FormData();
+            formData.append('video', fileInput.files[0]);
+            formData.append('language', language);
+            document.getElementById('input-status').innerText = 'Input: Sign Language Video';
+            document.getElementById('translating-status').innerText = 'Status: Translating...';
+
+            fetch('/predict_video', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showOutput(data);
+                    document.getElementById('translating-status').innerText = 'Status: Complete';
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('translating-status').innerText = 'Status: Error';
+                    showToast('Translation error.', true);
+                })
+                .finally(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    finishProgress();
+                });
+        }
+
+        function predictText(event) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spinner"></i> Translating...';
+            btn.disabled = true;
+            startProgress();
+
+            const text = document.getElementById('text-input').value;
+            const language = document.getElementById('output-language').value;
+            if (!text) {
+                showToast('Please enter text.', true);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                finishProgress();
+                return;
+            }
+            document.getElementById('input-status').innerText = 'Input: Text';
+            document.getElementById('translating-status').innerText = 'Status: Translating...';
+
+            fetch('/predict_text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: text, language: language })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showOutput(data);
+                    document.getElementById('translating-status').innerText = 'Status: Complete';
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('translating-status').innerText = 'Status: Error';
+                    showToast('Translation error.', true);
+                })
+                .finally(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    finishProgress();
+                });
+        }
+
+        function predictAudio(event) {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spinner"></i> Translating...';
+            btn.disabled = true;
+            startProgress();
+
+            const fileInput = document.getElementById('audio-file');
+            if (!fileInput.files[0]) {
+                showToast('Please select an audio file.', true);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                finishProgress();
+                return;
+            }
+            const language = document.getElementById('output-language').value;
+            const formData = new FormData();
+            formData.append('audio', fileInput.files[0]);
+            formData.append('language', language);
+            document.getElementById('input-status').innerText = 'Input: Audio File';
+            document.getElementById('translating-status').innerText = 'Status: Translating...';
+
+            fetch('/predict_audio', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    showOutput(data);
+                    document.getElementById('translating-status').innerText = 'Status: Complete';
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    document.getElementById('translating-status').innerText = 'Status: Error';
+                    showToast('Translation error.', true);
+                })
+                .finally(() => {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    finishProgress();
+                });
+        }
+
+        let recognition = null;
+        let isRecording = false;
+
+        function recordSpeech(event) {
+            const btn = event.currentTarget;
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                showToast('Your browser does not support speech recognition.', true);
+                return;
+            }
+            if (isRecording) {
+                recognition.stop();
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.onstart = () => {
+                isRecording = true;
+                btn.innerHTML = '<i class="fas fa-stop"></i> Stop Recording';
+                document.getElementById('recording-status').innerText = 'Listening... Speak now.';
+            };
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById('recording-status').innerText = 'Processing...';
+                const language = document.getElementById('output-language').value;
+                fetch('/predict_voice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: transcript, language: language })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        showOutput(data);
+                        document.getElementById('recording-status').innerText = 'Recording finished.';
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        document.getElementById('recording-status').innerText = 'Error during translation.';
+                        showToast('Translation error.', true);
+                    });
+            };
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                document.getElementById('recording-status').innerText = 'Error: ' + event.error;
+                showToast('Speech recognition failed: ' + event.error, true);
+                resetButton(btn);
+            };
+            recognition.onend = () => {
+                resetButton(btn);
+                isRecording = false;
+            };
+            recognition.start();
+        }
+
+        function resetButton(btn) {
+            btn.innerHTML = '<i class="fas fa-record-vinyl"></i> Start Voice Recording';
+            document.getElementById('recording-status').innerText = '';
+        }
+        fetch('/predict_webcam', { method: 'POST', body: formData })
+            .then(response => response.json())
+            .then(data => {
+                // Use the existing showOutput function from base template
+                showOutput(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Translation error', true);
+            });
+
+        // Webcam placeholders (overridden in webcam.html)
+        let webcamStream = null;
+        let hands = null;
+        let lastVideoTime = -1;
+        const HAND_CONNECTIONS = [
+            [0, 1], [1, 2], [2, 3], [3, 4], [0, 5], [5, 6], [6, 7], [7, 8], [0, 9], [9, 10],
+            [10, 11], [11, 12], [0, 13], [13, 14], [14, 15], [15, 16], [0, 17], [17, 18],
+            [18, 19], [19, 20], [5, 9], [9, 13], [13, 17], [0, 17]
+        ];
+        function startWebcam() { showToast('Webcam functions not loaded properly.', true); }
+        function captureWebcam() { showToast('Webcam functions not loaded properly.', true); }
+        function initHandTracking() { }
+        function onHandResults(results) { }
+        function drawConnectors() { }
+        function drawLandmarks() { }
+
+        // Dropdown toggle
+        function toggleDropdown(event) {
+            event.stopPropagation();
+            document.getElementById('input-dropdown').classList.toggle('show');
+        }
+        window.onclick = function (event) {
+            if (!event.target.matches('.dropbtn') && !event.target.closest('.dropdown')) {
+                document.getElementById('input-dropdown').classList.remove('show');
+            }
+        }
+
+        // Mobile Drawer Toggle
+        function toggleDrawer() {
+            const drawer = document.getElementById('side-drawer');
+            const overlay = document.getElementById('drawer-overlay');
+            drawer.classList.toggle('drawer-open');
+            overlay.classList.toggle('drawer-open');
+        }
+
+        // Inspirational Quotes Feature
+        const quotes = [
+            "\"Sign language is the most beautiful expression of the soul.\" – Unknown",
+            "\"Deaf people can do anything except hear.\" – I. King Jordan",
+            "\"Sign language is not about gestures, it's about communication.\" – Nyle DiMarco",
+            "\"The only thing that separates us is the inability to communicate.\" – Unknown",
+            "\"Language is the road map of a culture. It tells you where its people come from and where they are going.\" – Rita Mae Brown",
+            "\"In a world of silence, hands speak louder than words.\" – Unknown",
+            "\"Communication leads to community, understanding, and inclusivity.\" – Unknown",
+            "\"Every sign is a bridge between hearts.\" – Unknown",
+            "\"The beauty of sign language is that it is visual, expressive, and universal.\" – Unknown",
+            "\"When we learn to sign, we learn to listen with our eyes.\" – Unknown",
+            "\"Sign language is not a barrier, it's a bond.\" – Unknown",
+            "\"Deafness is not a disability, it's a different ability to communicate.\" – Unknown",
+            "\"Your voice can be heard even when you are silent, if you know how to sign.\" – Unknown",
+            "\"Inclusion begins with understanding – and sign language is the key.\" – Unknown",
+            "\"Every sign tells a story.\" – Unknown"
+        ];
+
+        function displayRandomQuote() {
+            const quoteTextElement = document.getElementById('quote-text');
+            const quoteContainer = document.getElementById('quote-container');
+
+            if (!quoteTextElement || !quoteContainer) return;
+
+            // Immediately set the first quote and make it visible
+            const initialIndex = Math.floor(Math.random() * quotes.length);
+            quoteTextElement.textContent = quotes[initialIndex];
+
+            // Small delay to ensure CSS transition works if not already rendered
+            setTimeout(() => {
+                quoteContainer.classList.add('visible');
+            }, 50);
+
+            function updateQuote() {
+                // Fade out
+                quoteContainer.classList.remove('visible');
+
+                setTimeout(() => {
+                    // Change text while invisible
+                    const randomIndex = Math.floor(Math.random() * quotes.length);
+                    quoteTextElement.textContent = quotes[randomIndex];
+
+                    // Fade back in
+                    quoteContainer.classList.add('visible');
+                }, 1000); // Wait for fade-out transition (1s)
+            }
+
+            // Rotate every 8 seconds
+            setInterval(updateQuote, 8000);
+        }
+
+        // Initialize features on load
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', displayRandomQuote);
+        } else {
+            displayRandomQuote();
+        }
+    </script>
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://unpkg.com/typed.js@2.0.16/dist/typed.umd.js"></script>
+    <script>
+        // Initialize AOS animations
+        AOS.init({
+            once: true,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+
+        // Initialize Typed.js for the hero section subtitle
+        let typedInstance = null;
+        function initTyped(lang) {
+            const stringsObj = typeof uiTranslations !== 'undefined' ? (uiTranslations[lang] || uiTranslations['en']) : null;
+            if (!stringsObj) return;
+            
+            const s1 = stringsObj.hero_subtitle;
+            const s2 = stringsObj.typed_str_2;
+            const s3 = stringsObj.typed_str_3;
+            
+            if (typedInstance) {
+                typedInstance.destroy();
+            }
+            if (document.getElementById('typed-subtitle')) {
+                typedInstance = new Typed('#typed-subtitle', {
+                    strings: [s1, s2, s3],
+                    typeSpeed: 50,
+                    backSpeed: 30,
+                    backDelay: 2000,
+                    loop: true,
+                    showCursor: true,
+                    cursorChar: '|'
+                });
+            }
+        }
+        
+        document.addEventListener('languageChanged', (e) => {
+            initTyped(e.detail);
+        });
+
+        // initial load if available
+        if (typeof uiTranslations !== 'undefined') {
+            initTyped(localStorage.getItem('uiLanguage') || 'en');
+        }
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

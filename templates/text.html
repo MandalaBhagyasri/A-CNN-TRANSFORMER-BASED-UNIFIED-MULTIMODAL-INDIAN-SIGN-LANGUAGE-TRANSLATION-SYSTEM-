@@ -1,0 +1,11 @@
+{% extends "index.html" %}
+{% block title %}Text Input{% endblock %}
+{% block input_section %}
+<div class="input-card glass-card float-card">
+    <h3><i class="fas fa-keyboard"></i> <span data-i18n="nav_text">Text Input</span></h3>
+    <input type="text" id="text-input" placeholder="Enter text..." value="hello you how"
+        data-i18n-placeholder="text_placeholder">
+    <button onclick="predictText(event)"><i class="fas fa-language"></i> <span data-i18n="text_button">Translate from
+            Text</span></button>
+</div>
+{% endblock %}

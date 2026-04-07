@@ -1,0 +1,406 @@
+{% extends "index.html" %}
+
+{% block title %}About Us{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* ===== About Page Specific Styles ===== */
+    .about-hero {
+        background: rgba(43, 58, 103, 0.5);
+        backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        color: white;
+        padding: 80px 20px;
+        text-align: center;
+        border-radius: 0 0 50px 50px;
+        margin-bottom: 60px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .about-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+        animation: rotate 30s linear infinite;
+    }
+
+    @keyframes rotate {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .about-hero h1 {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        position: relative;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .about-hero p {
+        font-size: 1.3rem;
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        opacity: 0.95;
+    }
+
+    /* Floating Cards */
+    .floating-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        animation: float 6s ease-in-out infinite;
+        height: 100%;
+        color: white;
+    }
+
+    .floating-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.3);
+    }
+
+    @keyframes float {
+        0% {
+            transform: translateY(0px);
+        }
+
+        50% {
+            transform: translateY(-10px);
+        }
+
+        100% {
+            transform: translateY(0px);
+        }
+    }
+
+    .card-icon {
+        font-size: 3rem;
+        color: #b3af8f;
+        margin-bottom: 20px;
+    }
+
+    /* Mission Section */
+    .mission-section {
+        background: #f8fafc;
+        padding: 80px 0;
+        margin: 60px 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .mission-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #2b3a67, #496a81, #b3af8f);
+    }
+
+    .mission-text {
+        font-size: 1.2rem;
+        line-height: 1.8;
+        color: #2c3e50;
+    }
+
+    /* Video Tutorial Section */
+    .video-tutorial {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 30px;
+        padding: 50px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+        margin: 60px 0;
+    }
+
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%;
+        /* 16:9 Aspect Ratio */
+        height: 0;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+
+    /* Team Section */
+    .team-member {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .team-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        background: linear-gradient(135deg, #b3af8f, #496a81);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .team-avatar:hover {
+        transform: scale(1.05);
+    }
+
+    /* Timeline Animation */
+    .timeline-item {
+        padding: 20px;
+        border-left: 3px solid rgba(255, 255, 255, 0.4);
+        margin-bottom: 20px;
+        position: relative;
+        animation: slideIn 0.5s ease-out;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -10px;
+        top: 20px;
+        width: 15px;
+        height: 15px;
+        border-radius: 50%;
+        background: #b3af8f;
+        border: 3px solid rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Stats Counter */
+    .stat-item {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 5px;
+        animation: countUp 2s ease-out;
+        text-shadow: 0 2px 10px rgba(255, 255, 255, 0.3);
+    }
+
+    @keyframes countUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .stat-label {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Glassmorphism Text Overrides */
+    .floating-card h3,
+    .floating-card p,
+    .video-tutorial h2,
+    .video-tutorial p,
+    .video-tutorial a,
+    .timeline-item h3,
+    .timeline-item p,
+    h2,
+    h3,
+    p {
+        color: white !important;
+    }
+
+    .team-member h3,
+    .team-member p,
+    .team-member i {
+        color: white !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .about-hero h1 {
+            font-size: 2.5rem;
+        }
+
+        .about-hero p {
+            font-size: 1.1rem;
+        }
+
+        .video-tutorial {
+            padding: 30px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block input_section %}
+<div class="about-hero">
+    <h1 data-i18n="about_hero_title">About SignLingua</h1>
+    <p data-i18n="about_hero_subtitle">Bridging communication gaps through Indian Sign Language translation</p>
+</div>
+
+<div class="container" style="max-width: 1200px; margin: 0 auto; padding: 0 20px;">
+    <!-- Mission & Vision Cards -->
+    <div class="row"
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 60px;">
+        <div class="floating-card">
+            <div class="card-icon">
+                <i class="fas fa-bullseye"></i>
+            </div>
+            <h3 style="color: #2b3a67; margin-bottom: 15px;" data-i18n="about_mission_title">Our Mission</h3>
+            <p style="color: #2c3e50; line-height: 1.6;" data-i18n="about_mission_text">To empower the Deaf and hard‑of‑hearing community by providing real‑time, accurate sign language translation using cutting‑edge AI technology. We aim to make communication seamless and inclusive.</p>
+        </div>
+        <div class="floating-card">
+            <div class="card-icon">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h3 style="color: #2b3a67; margin-bottom: 15px;" data-i18n="about_vision_title">Our Vision</h3>
+            <p style="color: #2c3e50; line-height: 1.6;" data-i18n="about_vision_text">A world where language is no barrier – where sign language users can interact freely with anyone, anywhere, using just a webcam and our intelligent platform.</p>
+        </div>
+        <div class="floating-card">
+            <div class="card-icon">
+                <i class="fas fa-heart"></i>
+            </div>
+            <h3 style="color: #2b3a67; margin-bottom: 15px;" data-i18n="about_values_title">Our Values</h3>
+            <p style="color: #2c3e50; line-height: 1.6;" data-i18n="about_values_text">Inclusivity, innovation, and community-driven development. We work closely with the Deaf community to ensure our translations are culturally accurate and respectful.</p>
+        </div>
+    </div>
+
+    <!-- Video Tutorial Section -->
+    <div class="video-tutorial">
+        <h2 style="color: #2b3a67; margin-bottom: 30px; text-align: center;" data-i18n="about_video_heading">
+            <i class="fas fa-play-circle" style="margin-right: 10px;"></i>
+            Learn About Indian Sign Language
+        </h2>
+        <div class="video-container">
+            <div class="about-video">
+    <video width="100%" height="400" controls autoplay muted loop>
+        <source src="{{ url_for('static', filename='videos/video.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+</div>
+        </div>
+        <p style="margin-top: 20px; color: #496a81; text-align: center;">
+            <span data-i18n="about_video_description1">Watch this short video to understand the basics of Indian Sign Language.</span>
+    
+    </div>
+
+    <!-- Stats Section -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin: 60px 0;">
+        <div class="stat-item">
+            <div class="stat-number">70+</div>
+            <div class="stat-label" data-i18n="about_stat_signvideos">Sign Videos</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">3</div>
+            <div class="stat-label" data-i18n="about_stat_languages">Indian Languages</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number" data-i18n="about_stat_realtime_number">Real-time</div>
+            <div class="stat-label" data-i18n="about_stat_realtime_label">Translation</div>
+        </div>
+    </div>
+
+    <!-- How It Works Timeline -->
+    <h2 style="color: #2b3a67; margin: 60px 0 30px; text-align: center;" data-i18n="about_how_heading">How It Works</h2>
+    <div style="max-width: 800px; margin: 0 auto;">
+        <div class="timeline-item">
+            <h3 style="color: #496a81;" data-i18n="about_step1_title">1. Choose Your Input</h3>
+            <p data-i18n="about_step1_desc">Upload a sign language video, type text, or use your webcam to sign in real‑time.</p>
+        </div>
+        <div class="timeline-item">
+            <h3 style="color: #496a81;" data-i18n="about_step2_title">2. AI Translation</h3>
+            <p data-i18n="about_step2_desc">Our CNN‑Transformer model processes your input and recognises the sign.</p>
+        </div>
+        <div class="timeline-item">
+            <h3 style="color: #496a81;" data-i18n="about_step3_title">3. Output</h3>
+            <p data-i18n="about_step3_desc">Get text, speech, and a 3D avatar animation in your chosen language (English, Hindi, Telugu).</p>
+        </div>
+    </div>
+
+    <!-- Team Section -->
+    <h2 style="color: #2b3a67; margin: 80px 0 40px; text-align: center;" data-i18n="about_team_heading">Meet the Team</h2>
+    <div
+        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 40px; margin-bottom: 60px;">
+        <div class="team-member">
+            <div class="team-avatar">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <h3 style="color: #2b3a67;" data-i18n="about_team_lead_name">Bhagyashree</h3>
+            <p style="color: #496a81;" data-i18n="about_team_lead_role">Project Lead & Developer</p>
+            <p style="color: #2c3e50; margin-top: 10px;" data-i18n="about_team_lead_desc">B.Tech Final Year, Computer Science</p>
+        </div>
+        <div class="team-member">
+            <div class="team-avatar">
+                <i class="fas fa-chalkboard-teacher"></i>
+            </div>
+            <h3 style="color: #2b3a67;" data-i18n="about_team_guide_name">Mr . D. Shilpa</h3>
+            <p style="color: #496a81;" data-i18n="about_team_guide_role">Project Guide</p>
+            <p style="color: #2c3e50; margin-top: 10px;" data-i18n="about_team_guide_desc">Assistant Professor, Department of CSE</p>
+        </div>
+        <div class="team-member">
+            <div class="team-avatar">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 style="color: #2b3a67;" data-i18n="about_team_advisors_title">Deaf Community Advisors</h3>
+            <p style="color: #496a81;" data-i18n="about_team_advisors_role">Validation & Feedback</p>
+            <p style="color: #2c3e50; margin-top: 10px;" data-i18n="about_team_advisors_desc">Ensuring cultural and linguistic accuracy</p>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div style="text-align: center; margin: 80px 0;">
+        <a href="{{ url_for('video_input') }}" class="cta-button"
+            style="display: inline-block; padding: 16px 40px; background: #496a81; color: white; border-radius: 50px; text-decoration: none; font-weight: 600; transition: transform 0.2s;">
+            <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+            <span data-i18n="about_cta_button">Try SignLingua Now</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
