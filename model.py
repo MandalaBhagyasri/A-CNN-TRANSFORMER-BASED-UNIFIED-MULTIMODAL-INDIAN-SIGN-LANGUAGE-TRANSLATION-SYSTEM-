@@ -11,7 +11,7 @@ class VideoTransformerModel(nn.Module):
     def __init__(self, num_classes, d_model=512, nhead=8, num_layers=3):
         super().__init__()
         # CNN encoder per frame
-        resnet = resnet18(pretrained=True)
+        resnet = resnet18(weights=None)
         # Remove avgpool and fc, keep all conv layers, then add adaptive avgpool
         self.cnn = nn.Sequential(
             *list(resnet.children())[:-2],           # up to last conv layer
