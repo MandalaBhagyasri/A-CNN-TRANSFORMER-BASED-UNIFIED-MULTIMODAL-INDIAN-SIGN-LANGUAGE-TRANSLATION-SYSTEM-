@@ -43,6 +43,14 @@ body {
     background: linear-gradient(rgba(43, 58, 103, 0.8), rgba(73, 106, 129, 0.8)), url('/sign12.jpeg') center center / cover no-repeat fixed;
 }
 
+body{
+    background-image: url('/static/images/sign12.jpeg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh;
+}
+
 /* Base Glass Card */
 .glass-card {
     background: var(--glass-bg-light);
