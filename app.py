@@ -502,10 +502,6 @@ def serve_avatar(filename):
 def serve_audio(filename):
     return send_file(filename, mimetype='audio/mpeg')
 
-# Serve the background image
-@app.route('/sign12.jpeg')
-def serve_sign_image():
-    return send_file('sign12.jpeg', mimetype='image/jpeg')
 
 # Debug route (optional)
 @app.route('/debug_routes')
