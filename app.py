@@ -13,7 +13,6 @@ from model import VideoTransformerModel
 from avatar_generator import AvatarGenerator
 import speech_recognition as sr
 from gtts import gTTS
-import pygame
 import wave
 import audioop
 import requests
@@ -207,7 +206,6 @@ avatar_gen = AvatarGenerator(
     fingerspelling_folder='fingerspelling/'
 )
 
-pygame.mixer.init()
 
 def predict_sign_video(video_bytes):
     with tempfile.NamedTemporaryFile(suffix='.mp4', delete=False) as f:
