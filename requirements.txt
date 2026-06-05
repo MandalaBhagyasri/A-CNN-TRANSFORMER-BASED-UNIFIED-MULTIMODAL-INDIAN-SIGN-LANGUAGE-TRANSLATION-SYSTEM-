@@ -10,3 +10,4 @@ python-dotenv>=1.0.0
 flask>=3.0.0
 flask-cors>=6.0.0
 SpeechRecognition>=3.10.0
+gTTS>=2.5.0
